@@ -69,7 +69,22 @@ async fn main() -> Result<(), reqwest::Error> {
 
                 if (value["t"] == "MESSAGE_CREATE"){
                     if value["d"]["content"] == "!getcommit" {
-                        bot.SendMessage("死ね", value["d"]["channel_id"].as_str().unwrap()).await;
+
+                        let url = "https://api.github.com/repos/daihukuman/fulika/commits?per_page=1";
+
+                        let response = bot.Client
+                            .get(url)
+                            .header("User-Agent", "MyApp")
+                            .send()
+                            .await?;
+
+                        let commits: serde_json::Value = response.json().await?;
+
+                        let latest = &commits[0];
+
+                        let retstr = format!("## 最後のコミット\nHash: {}\nMessage: {}\nDate: {}\nこれまでの更新: https://github.com/daihukuman/fulika/commits/master/", latest["sha"], latest["commit"]["message"], latest["commit"]["author"]["date"]);
+                        
+                        bot.SendMessage(&retstr, value["d"]["channel_id"].as_str().unwrap()).await;
                     }
                 }
             }
